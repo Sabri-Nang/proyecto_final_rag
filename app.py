@@ -2,6 +2,7 @@ from pathlib import Path
 import gradio as gr
 from indexer import cargar_pdfs_interfaz
 from query import pipeline_rag, retriever
+import config
 
 def responder_pregunta(pregunta, historial):
     if not pregunta.strip():
@@ -23,9 +24,14 @@ def responder_pregunta(pregunta, historial):
     return historial, "\n".join(lineas_fuente)
 
 # ─── Interfaz Gradio ───
-with gr.Blocks(title="RAG Local — IFTS24", theme=gr.themes.Soft()) as demo:
-    gr.Markdown("# RAG con HuggingFace Spaces")
+if config.MODO_LOCAL:
+    title = "RAG Local - IFTS24"
+else:
+    title = "RAG con HuggingFace Spaces"
+with gr.Blocks(title=title, theme=gr.themes.Soft()) as demo:
+    gr.Markdown("# Asistente Inteligente de Documentación Técnica para Robótica")
     gr.Markdown("**Laboratorio de PLN — IFTS24, 2026**")
+    gr.Markdown("Alumna: Sabrina Sanches")
 
     with gr.Tab("📄 Cargar documentos"):
         upload_component = gr.File(

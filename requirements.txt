@@ -1,7 +1,6 @@
 # Proyecto Final — RAG con Gradio
 # Laboratorio de PLN — IFTS24, 2026
-#
-# HuggingFace Spaces instala esto automáticamente.
+
 # Localmente: uv pip install -r requirements.txt
 
 # Pipeline RAG

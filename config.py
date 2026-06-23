@@ -43,3 +43,6 @@ COLLECTION_NAME = "proyecto_rag_spaces"
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
 SEPARATORS = ["\n\n", "\n", ". ", " "]
+
+# Cantidad de fragmentos que devuelve el retriever por pregunta.
+TOP_K = 4

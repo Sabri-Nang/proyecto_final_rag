@@ -25,31 +25,30 @@ vectorstore = Chroma(
     embedding_function=embeddings_global
 )
 
-# --- Tu función modificada para la interfaz de Gradio ---
-def cargar_y_fragmentar_pdfs_gradio(archivos_gradio):
-    """Carga los documentos PDF subidos desde la interfaz de Gradio,
-    los procesa usando PyPDFLoader, y muestra información de progreso.
+# --- Núcleo de carga: recibe rutas a PDFs (str o Path) ---
+def cargar_y_fragmentar_pdfs(rutas_pdfs):
+    """Carga documentos PDF a partir de una lista de rutas, los procesa con
+    PyPDFLoader y los fragmenta. Es el núcleo común que usan tanto la carga
+    automática de la carpeta de datos como la subida manual desde Gradio.
     """
-    if not archivos_gradio:
-        return "No se seleccionaron archivos.", []
+    if not rutas_pdfs:
+        return [], []
 
     documentos_crudos = []
     nombres_archivos = []
 
-    # En Gradio, 'archivos_gradio' es una lista de objetos de tipo archivo
-    for archivo in archivos_gradio:
-        nombre_corto = Path(archivo.name).name
+    for ruta in rutas_pdfs:
+        ruta = Path(ruta)
+        nombre_corto = ruta.name
         nombres_archivos.append(nombre_corto)
-        
-        # Cargamos usando la ruta temporal que nos da Gradio (.name)
-        loader = PyPDFLoader(archivo.name)
+
+        loader = PyPDFLoader(str(ruta))
         paginas = loader.load()
         documentos_crudos.extend(paginas)
         print(f"  ✓ {nombre_corto} — {len(paginas)} páginas")
 
-    print(f"\n✓ Total: {len(documentos_crudos)} páginas cargadas desde la interfaz")
+    print(f"\n✓ Total: {len(documentos_crudos)} páginas cargadas")
 
-    # Tu divisor original con las constantes del config
     divisor = RecursiveCharacterTextSplitter(
         chunk_size=config.CHUNK_SIZE,
         chunk_overlap=config.CHUNK_OVERLAP,
@@ -61,14 +60,22 @@ def cargar_y_fragmentar_pdfs_gradio(archivos_gradio):
     print(f"  Documentos originales: {len(documentos_crudos)} páginas")
     print(f"  Fragmentos generados:  {len(fragmentos)}")
 
-    # Log de ejemplo idéntico al tuyo
     if fragmentos:
         print(f"\n◈ Ejemplo de fragmento:")
         print(f"  Fuente: {Path(fragmentos[0].metadata.get('source', 'desconocida')).name}")
         print(f"  Página: {fragmentos[0].metadata.get('page', '?')}")
         print(f"  Texto:  {fragmentos[0].page_content[:200]}...")
-        
+
     return nombres_archivos, fragmentos
+
+
+def cargar_y_fragmentar_pdfs_gradio(archivos_gradio):
+    """Wrapper para cuando los PDFs vienen subidos desde la interfaz de Gradio
+    (objetos de archivo temporal, no rutas simples)."""
+    if not archivos_gradio:
+        return [], []
+    rutas = [archivo.name for archivo in archivos_gradio]
+    return cargar_y_fragmentar_pdfs(rutas)
 
 
 def guardar_en_vector_db_gradio(fragmentos: list):
@@ -76,7 +83,6 @@ def guardar_en_vector_db_gradio(fragmentos: list):
     cantidad_fragmentos = len(fragmentos)
     print(f"\n💾 Guardando {cantidad_fragmentos} fragmentos en ChromaDB (Memoria)...")
 
-    # Añadimos los documentos a la instancia global
     vectorstore.add_documents(fragmentos)
 
     print(f"✓ Base vectorial lista")
@@ -84,15 +90,45 @@ def guardar_en_vector_db_gradio(fragmentos: list):
     print(f"  Fragmentos indexados en este lote: {cantidad_fragmentos}")
     print("✓ Base vectorial actualizada en memoria para el Space.")
 
-# --- La función orquestadora que llamará app.py ---
+
+# --- La función orquestadora que llama app.py desde la pestaña de Gradio ---
 def cargar_pdfs_interfaz(archivos):
     """Función que unifica la carga y el guardado para Gradio."""
     print("=== INICIANDO PIPELINE DE INGESTA DESDE GRADIO ===")
-    
+
     nombres, fragmentos = cargar_y_fragmentar_pdfs_gradio(archivos)
     if not fragmentos:
         return "❌ Proceso abortado: No se generaron fragmentos."
-        
+
     guardar_en_vector_db_gradio(fragmentos)
-    
+
     return f"✓ Archivos: {', '.join(nombres)}\n✓ Fragmentos indexados: {len(fragmentos)}"
+
+
+# --- Carga automática de la carpeta de datos al iniciar la app ---
+def indexar_carpeta_datos():
+    """Indexa automáticamente todos los PDFs de config.CARPETA_DATOS al
+    arrancar la app, para que el Space tenga conocimiento base sin que
+    nadie tenga que subir nada manualmente. Se ejecuta una sola vez,
+    al importar este módulo.
+    """
+    carpeta = config.CARPETA_DATOS
+
+    if not carpeta.exists():
+        print(f"⚠ No existe la carpeta '{carpeta.name}/'; se omite la carga inicial.")
+        return 0, []
+
+    rutas_pdfs = sorted(carpeta.glob("*.pdf"))
+    if not rutas_pdfs:
+        print(f"⚠ No hay PDFs en '{carpeta.name}/'; se omite la carga inicial.")
+        return 0, []
+
+    print(f"\n📂 Indexando {len(rutas_pdfs)} PDF(s) precargados desde '{carpeta.name}/'...")
+    nombres, fragmentos = cargar_y_fragmentar_pdfs(rutas_pdfs)
+    if fragmentos:
+        guardar_en_vector_db_gradio(fragmentos)
+
+    return len(fragmentos), nombres
+
+
+FRAGMENTOS_INICIALES, ARCHIVOS_INICIALES = indexar_carpeta_datos()

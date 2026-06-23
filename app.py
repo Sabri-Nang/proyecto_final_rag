@@ -152,7 +152,7 @@ if config.MODO_LOCAL:
 else:
     titulo = "RAG con HuggingFace Spaces"
 
-with gr.Blocks(title=titulo, css=CSS_PERSONALIZADO) as demo:
+with gr.Blocks(title=titulo) as demo:
     gr.HTML(HEADER_HTML)
 
     with gr.Tab("📄 Cargar documentos"):
@@ -182,8 +182,7 @@ with gr.Blocks(title=titulo, css=CSS_PERSONALIZADO) as demo:
         chatbot_componente = gr.Chatbot(
             label="Conversación",
             height=420,
-            type="messages",
-            show_copy_button=True,
+            #show_copy_button=True,
         )
         with gr.Row():
             pregunta_componente = gr.Textbox(
@@ -231,4 +230,4 @@ with gr.Blocks(title=titulo, css=CSS_PERSONALIZADO) as demo:
         gr.Markdown(ACERCA_DE_MD)
 
 if __name__ == "__main__":
-    demo.launch(theme=TEMA)
+    demo.launch(theme=TEMA, css=CSS_PERSONALIZADO)

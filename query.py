@@ -1,5 +1,5 @@
 from langchain_community.llms import Ollama
-from langchain_huggingface import HuggingFaceEndpoint
+from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
@@ -16,12 +16,15 @@ if config.MODO_LOCAL:
     )
 else:
     print(f"☁️ Inicializando LLM Cloud vía Hugging Face Endpoint: {config.MODEL_ID}...")
-    llm = HuggingFaceEndpoint(
+    llm_endpoint = HuggingFaceEndpoint(
         repo_id=config.MODEL_ID,
+        task="conversational",
         huggingfacehub_api_token=config.HF_TOKEN,
         temperature=0.1,
         max_new_tokens=512
     )
+    llm = ChatHuggingFace(llm=llm_endpoint)
+    
 
 retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 

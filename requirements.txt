@@ -11,6 +11,7 @@ langchain-chroma>=1.0.0
 langchain-text-splitters>=1.0.0
 langchain-core>=1.0.0
 langchain-huggingface>=0.1.0
+python-dotenv>=1.0.0
 
 # Base vectorial y embeddings
 chromadb>=0.6.0

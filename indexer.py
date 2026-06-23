@@ -2,18 +2,37 @@ from pathlib import Path
 import os
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import SentenceTransformerEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 import config
+
+
+class EmbeddingsE5(HuggingFaceEmbeddings):
+    """multilingual-e5-large es un modelo ASIMÉTRICO: hay que anteponer
+    'query: ' a las preguntas y 'passage: ' a los fragmentos que se indexan
+    para que la búsqueda funcione bien (incluso con texto en otros idiomas).
+    Sin estos prefijos el propio modelo advierte una degradación notable de
+    la calidad de búsqueda — y eso puede hacer que, entre dos documentos muy
+    parecidos (por ejemplo dos PDFs distintos sobre el mismo sensor), el
+    fragmento correcto no quede entre los primeros resultados.
+    Referencia: https://huggingface.co/intfloat/multilingual-e5-large
+    """
+
+    def embed_documents(self, textos):
+        return super().embed_documents([f"passage: {t}" for t in textos])
+
+    def embed_query(self, texto):
+        return super().embed_query(f"query: {texto}")
+
 
 # --- Inicializar el modelo de Embeddings ---
 def obtener_modelo_embeddings(nombre_modelo=config.EMBEDDING_MODEL):
     # multilingual-e5-large corre localmente en el Space sin consumir API
-    modelo_embeddings = SentenceTransformerEmbeddings(
+    modelo_embeddings = EmbeddingsE5(
         model_name=nombre_modelo
     )
     print("✓ Modelo de embeddings configurado")
-    print(f"  {nombre_modelo}, sin API")
+    print(f"  {nombre_modelo}, sin API (con prefijos query/passage de E5)")
     return modelo_embeddings
 
 # --- Instancia Global de la DB en Memoria ---
@@ -78,6 +97,15 @@ def cargar_y_fragmentar_pdfs_gradio(archivos_gradio):
     return cargar_y_fragmentar_pdfs(rutas)
 
 
+def contar_fragmentos_totales():
+    """Devuelve cuántos fragmentos hay en total en la base vectorial.
+    Sirve para verificar que una subida nueva realmente se haya indexado."""
+    try:
+        return vectorstore._collection.count()
+    except Exception:
+        return None
+
+
 def guardar_en_vector_db_gradio(fragmentos: list):
     """Toma los fragmentos y los indexa en la instancia activa de ChromaDB."""
     cantidad_fragmentos = len(fragmentos)
@@ -85,9 +113,12 @@ def guardar_en_vector_db_gradio(fragmentos: list):
 
     vectorstore.add_documents(fragmentos)
 
+    total = contar_fragmentos_totales()
     print(f"✓ Base vectorial lista")
     print(f"  Colección: {config.COLLECTION_NAME}")
     print(f"  Fragmentos indexados en este lote: {cantidad_fragmentos}")
+    if total is not None:
+        print(f"  Total acumulado en la base: {total}")
     print("✓ Base vectorial actualizada en memoria para el Space.")
 
 
@@ -102,7 +133,11 @@ def cargar_pdfs_interfaz(archivos):
 
     guardar_en_vector_db_gradio(fragmentos)
 
-    return f"✓ Archivos: {', '.join(nombres)}\n✓ Fragmentos indexados: {len(fragmentos)}"
+    total = contar_fragmentos_totales()
+    mensaje = f"✓ Archivos: {', '.join(nombres)}\n✓ Fragmentos indexados en este lote: {len(fragmentos)}"
+    if total is not None:
+        mensaje += f"\n📊 Total acumulado en la base: {total}"
+    return mensaje
 
 
 # --- Carga automática de la carpeta de datos al iniciar la app ---

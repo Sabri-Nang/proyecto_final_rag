@@ -1,7 +1,7 @@
 from pathlib import Path
 import gradio as gr
-from indexer2 import cargar_pdfs_interfaz
-from query2 import pipeline_rag, retriever
+from indexer import cargar_pdfs_interfaz
+from query import pipeline_rag, retriever
 
 def responder_pregunta(pregunta, historial):
     if not pregunta.strip():

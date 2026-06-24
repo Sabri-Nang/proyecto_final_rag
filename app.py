@@ -47,8 +47,8 @@ else:
     )
 
 EJEMPLOS_PREGUNTAS = [
-    "¿Qué rango de humedad puede medir el sensor?",
-    "¿Cómo se conecta el sensor a una placa Arduino?",
+    "¿Qué sensor puedo utilizar para medir la humedad?",
+    "¿Cómo se conecta un sensor de temperatura a una placa Arduino?",
     "¿Qué precisión tiene la medición de temperatura?",
 ]
 

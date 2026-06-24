@@ -21,7 +21,7 @@ else:
         task="conversational",
         huggingfacehub_api_token=config.HF_TOKEN,
         temperature=0.1,
-        max_new_tokens=512
+        max_new_tokens=1024
     )
     llm = ChatHuggingFace(llm=llm_endpoint)
     

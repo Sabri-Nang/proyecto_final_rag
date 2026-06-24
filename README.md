@@ -3,7 +3,7 @@
 Sistema de **Retrieval-Augmented Generation (RAG)** que responde preguntas sobre
 manuales y datasheets de Arduino y sensores, basándose únicamente en el
 contenido de los PDFs cargados — sin inventar información que no esté en los
-documentos.
+documentos. Al sistema se le cargaron 7 pdfs, entre ellos manuales y guías de estudio de arduino y datasheets de componentes.
 
 > Trabajo final — Procesamiento del Lenguaje Natural, IFTS24 (2026)
 > Alumna: Sabrina Sanches
@@ -88,15 +88,15 @@ La app va a estar disponible en `http://localhost:7860`.
 
 ## Despliegue en Hugging Face Spaces
 
-1. Creá un nuevo Space, tipo **Gradio**.
-2. Subí todos los archivos del repo **incluyendo la carpeta `documentos/`**.
-3. En **Settings → Variables and secrets**, agregá un secreto:
+1. En Hugging Face, crea un nuevo Space, tipo **Gradio**.
+2. Luego subir todos los archivos del repositorio, menos el README.md, **incluyendo la carpeta `documentos/`**.
+3. En **Settings → Variables and secrets**, agrega un secreto:
 
    | Nombre     | Valor                                              |
    |------------|-----------------------------------------------------|
    | `HF_TOKEN` | Tu token de Hugging Face (con permiso de lectura como mínimo) |
 
-   Lo generás en [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens).
+   Se genera desde [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens).
 4. El Space va a detectar automáticamente que está en la nube (gracias a la
    variable `SPACE_ID` que define Hugging Face) y va a usar el endpoint de
    `Qwen2.5-Coder-7B-Instruct` en vez de Ollama.
@@ -104,10 +104,10 @@ La app va a estar disponible en `http://localhost:7860`.
 
 ## Agregar más documentos después de desplegado
 
-Desde la pestaña **📄 Cargar documentos** de la interfaz podés subir PDFs
+Desde la pestaña **📄 Cargar documentos** de la interfaz se puede subir PDFs
 adicionales en cualquier momento; se suman a los que ya estén indexados. Esos
 PDFs adicionales **no persisten** si el Space se reinicia — para que un
-documento esté siempre disponible, sumalo a la carpeta `documentos/` del
+documento esté siempre disponible se deben agregar a la carpeta `documentos/` del
 repositorio.
 
 ## Limitaciones conocidas

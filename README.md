@@ -12,9 +12,9 @@ documentos.
 
 ## ¿Qué hace?
 
-1. **Cargás PDFs** (manuales de sensores, datasheets, guías de Arduino) desde
-   la propia interfaz, o los dejás precargados en la carpeta `documentos/`.
-2. La app los **fragmenta**, genera **embeddings** y los guarda en una base
+1. Recibe **PDFs** (manuales de sensores, datasheets, guías de Arduino) desde
+   la propia interfaz y utiliza los precargados en la carpeta `documentos/`.
+2. La app los **fragmenta** los documentos, genera **embeddings** y los guarda en una base
    vectorial **ChromaDB**.
 3. Al hacer una pregunta, busca los fragmentos más relevantes y se los pasa a
    un **LLM**, que redacta la respuesta citando de qué documento y página salió

@@ -12,17 +12,20 @@ def responder_pregunta(pregunta, historial):
     respuesta = pipeline_rag.invoke(pregunta)
     fragmentos_fuente = retriever.invoke(pregunta)
 
-    lineas_fuente = []
-    for frag in fragmentos_fuente:
+    bloques_fuente = []
+    for i, frag in enumerate(fragmentos_fuente, start=1):
         fuente = Path(frag.metadata.get("source", "desconocida")).name
         pagina = frag.metadata.get("page", "?")
-        lineas_fuente.append(f"📎 {fuente} · pág. {pagina}")
+        texto = frag.page_content.strip()
+        bloques_fuente.append(
+            f"📎 Fragmento {i} — {fuente} · pág. {pagina}\n{texto}"
+        )
 
     historial = historial + [
         {"role": "user", "content": pregunta},
         {"role": "assistant", "content": respuesta}
     ]
-    return historial, "\n".join(lineas_fuente)
+    return historial, "\n\n────────────────────\n\n".join(bloques_fuente)
 
 
 def limpiar_conversacion():
@@ -182,7 +185,6 @@ with gr.Blocks(title=titulo) as demo:
         chatbot_componente = gr.Chatbot(
             label="Conversación",
             height=420,
-            #show_copy_button=True,
         )
         with gr.Row():
             pregunta_componente = gr.Textbox(
@@ -198,7 +200,8 @@ with gr.Blocks(title=titulo) as demo:
         fuentes_componente = gr.Textbox(
             label="Fragmentos consultados",
             interactive=False,
-            lines=3,
+            lines=10,
+            max_lines=40,
             elem_id="fuentes-box"
         )
 
